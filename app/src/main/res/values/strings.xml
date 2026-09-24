@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">工程模式菜单兼容</string>
+    <string name="app_description">在 Android 17 工程模式中恢复 Android 16 中仍保留的菜单入口</string>
+</resources>
