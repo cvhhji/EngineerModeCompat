@@ -1,39 +1,31 @@
 # 工程模式菜单兼容
 
-Android 17 上的 API 102 LSPosed 模块，只作用于 `com.oplus.engineermode`。模块保留手机内置 Android 17 工程模式 APK，不替换它，也不修改系统 Secrecy 配置。
+这是一个 libxposed API 102 模块，应用包名为 `com.engineermode.cvh`，静态作用域仅为 `com.oplus.engineermode`。
 
-## 已恢复的 Android 16 菜单
+## Android 16 菜单恢复
 
-Android 17 的加密状态过滤会隐藏以下仍有 Android 17 实现的入口：
+Android 17 工程模式 APK 仍实现、但被加密状态菜单过滤隐藏的 16 版入口：器件校准状态、读写关键 Log 测试、在线写 key、NFC 安全芯片入口和 Sensor Offset 测试。模块还保留 Android 17 的 `CLEAN_F_STATUS` 入口。
 
-- 器件校准状态（key: `deivce_calibration_status`）
-- 读写关键 Log 测试（`write_log_test`）
-- 在线写 key（`write_key_online`）
-- NFC 安全芯片入口（`nfc_clear_se`，手机菜单可能显示为“安全芯片测试”）
-- Sensor Offset 测试（`sensoroffset_preference`）
+模块不替换工程模式 APK，也不修改系统 Secrecy 服务、硬件支持判断或其他应用。仍存在的旧入口由 Android 17 系统 APK 提供。
 
-模块同时保留 Android 17 新增的 `CLEAN_F_STATUS` 入口；Android 17 原有菜单、页面和硬件支持判断继续由系统 APK 提供。
+旧版部分页面的实现已从 Android 17 APK 删除，包括第二屏测试、旧诊断执行页、`DownloadStatus` 和旧 `OtgTest`/`USBDetectActivity`。模块不会为这些页面创建无实现的菜单项。
 
-入口位置：工程模式 → 售后手动测试。横向滑动顶部分类栏；Sensor Offset 在“设备调试”，校准状态、Log 和 Key 等在“其他”。
+## 构建与固定签名
 
-## 为什么没有把所有旧名称都加回来
-
-逐项比对了 Android 16 APK 的偏好项、资源和组件清单与手机上的 Android 17 APK。只有上面五项是“新版本仍有实现、但被新增菜单过滤隐藏”的旧入口。其余旧名称并不都属于隐藏项：有些仍按机型或硬件支持条件显示，有些由 Android 17 的新页面替代；还有些旧实现已从 Android 17 APK 删除。例如旧第二屏测试、旧 `DiagnosticExecutorActivity` 诊断页面、`DownloadStatus`、旧 `OtgTest`/`USBDetectActivity`。给这些已删除页面添加菜单字样不会恢复其功能，模块不会生成点开无效的占位项。
-
-## 构建
-
-需要 JDK 17 或更高版本及 Android SDK 36。仓库附带 Gradle 9.7.1 Wrapper：
+需要 JDK 17 或更高版本及 Android SDK 36。使用仓库提供的 Gradle 9.7.1 Wrapper：
 
 ```powershell
-.\gradlew.bat :app:assembleDebug
+.\gradlew.bat :app:assembleRelease
 ```
 
-Debug APK 输出在 `app/build/outputs/apk/debug/app-debug.apk`。已发布的设备安装包位于 `release/EngineerModeCompat-1.0.0.apk`。
+Debug 和 Release 构建都使用同一签名配置。签名私钥不得提交到仓库；在当前用户的 Gradle 配置文件中设置 `engineerModeSigningStoreFile`、`engineerModeSigningStorePassword`、`engineerModeSigningKeyAlias`、`engineerModeSigningKeyPassword`。其他构建机必须安全地配置同一 keystore，不能临时生成新密钥。
 
-## 启用
+固定签名证书 SHA-256 指纹：`99:D4:B5:2B:86:E7:04:29:C3:EC:FA:CA:22:1B:75:43:2B:85:B9:7C:59:17:BC:A1:90:1E:CE:63:89:CE:37:03`。v1.1.0 及后续版本必须继续使用对应私钥。
 
-安装 APK 后，在 LSPosed 中启用“工程模式菜单兼容”。静态作用域已限定为 `com.oplus.engineermode`。重启工程模式进程后生效。
+Release APK 输出到 `app/build/outputs/apk/release/app-release.apk`。本版本包名从 `com.cvh.engineermodecompat` 改为 `com.engineermode.cvh`，Android 会将其识别为新应用；启用新模块前应禁用或卸载旧包。
 
-## 操作范围
+## 启用与操作范围
 
-模块只恢复菜单显示，不自动执行校准、关键日志读写、在线写 Key 或安全芯片清除。相关页面自身的授权、Secrecy 和设备条件仍由工程模式保留。
+安装后在 LSPosed 中启用“工程模式菜单兼容”。入口位于“售后手动测试”；横向滑动顶部分类栏，Sensor Offset 在“设备调试”，校准状态、关键 Log、在线 Key 和安全芯片相关入口在“其他”。
+
+模块只恢复入口显示，不会自动执行校准、关键日志读写、在线写 Key 或安全芯片清除；工程模式自身的授权和设备条件仍保留。

@@ -1,4 +1,4 @@
-package com.cvh.engineermodecompat;
+package com.engineermode.cvh;
 
 import android.util.Log;
 
