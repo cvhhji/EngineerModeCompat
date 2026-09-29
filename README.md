@@ -1,31 +1,39 @@
-# 工程模式菜单兼容
+# 工程模式兼容模块
 
-这是一个 libxposed API 102 模块，应用包名为 `com.engineermode.cvh`，静态作用域仅为 `com.oplus.engineermode`。
+这是一个 libxposed API 102 模块，用来恢复 Android 17 工程模式中被菜单过滤隐藏、但系统 APK 仍保留实现的入口。模块包名是 `com.engineermode.cvh`，作用范围限定为 `com.oplus.engineermode`，不会替换手机里的工程模式 APK。
 
-## Android 16 菜单恢复
+## 菜单入口
 
-Android 17 工程模式 APK 仍实现、但被加密状态菜单过滤隐藏的 16 版入口：器件校准状态、读写关键 Log 测试、在线写 key、NFC 安全芯片入口和 Sensor Offset 测试。模块还保留 Android 17 的 `CLEAN_F_STATUS` 入口。
+模块重新显示这五项：
 
-模块不替换工程模式 APK，也不修改系统 Secrecy 服务、硬件支持判断或其他应用。仍存在的旧入口由 Android 17 系统 APK 提供。
+- 器件校准状态
+- 读写关键 Log 测试
+- 在线写 Key
+- NFC 安全芯片入口
+- Sensor Offset 测试
 
-旧版部分页面的实现已从 Android 17 APK 删除，包括第二屏测试、旧诊断执行页、`DownloadStatus` 和旧 `OtgTest`/`USBDetectActivity`。模块不会为这些页面创建无实现的菜单项。
+Android 17 原有的 `CLEAN_F_STATUS` 也会保留。模块只把入口放回菜单，不会替你执行器件校准、关键 Log 读写、在线写 Key 或清除安全芯片。页面能否使用仍由工程模式本身的权限和设备条件决定。
 
-## 构建与固定签名
+Android 16 的部分旧页面在 Android 17 APK 中已经没有对应实现，例如第二屏测试、旧诊断执行页、`DownloadStatus`、`OtgTest`/`USBDetectActivity`。只加菜单项无法恢复这些页面，所以这里没有放无效入口。
 
-需要 JDK 17 或更高版本及 Android SDK 36。使用仓库提供的 Gradle 9.7.1 Wrapper：
+## 安装
+
+安装 APK 后，在 LSPosed 中启用“工程模式菜单兼容”。入口在“售后手动测试”：Sensor Offset 位于“设备调试”，校准状态、Log、Key 和安全芯片入口位于“其他”。重启工程模式进程后生效。
+
+本版本包名从 `com.cvh.engineermodecompat` 改为 `com.engineermode.cvh`，Android 会把它当作另一个应用。安装新版前，请在 LSPosed 中停用旧模块或卸载旧包。
+
+## 构建
+
+需要 JDK 17 或更高版本、Android SDK 36。仓库带有 Gradle 9.7.1 Wrapper：
 
 ```powershell
 .\gradlew.bat :app:assembleRelease
 ```
 
-Debug 和 Release 构建都使用同一签名配置。签名私钥不得提交到仓库；在当前用户的 Gradle 配置文件中设置 `engineerModeSigningStoreFile`、`engineerModeSigningStorePassword`、`engineerModeSigningKeyAlias`、`engineerModeSigningKeyPassword`。其他构建机必须安全地配置同一 keystore，不能临时生成新密钥。
+Release APK 输出到 `app/build/outputs/apk/release/app-release.apk`。
 
-固定签名证书 SHA-256 指纹：`99:D4:B5:2B:86:E7:04:29:C3:EC:FA:CA:22:1B:75:43:2B:85:B9:7C:59:17:BC:A1:90:1E:CE:63:89:CE:37:03`。v1.1.0 及后续版本必须继续使用对应私钥。
+## 固定签名
 
-Release APK 输出到 `app/build/outputs/apk/release/app-release.apk`。本版本包名从 `com.cvh.engineermodecompat` 改为 `com.engineermode.cvh`，Android 会将其识别为新应用；启用新模块前应禁用或卸载旧包。
+Debug 和 Release 使用同一 keystore。签名私钥不在仓库中；在当前用户的 Gradle 配置文件里设置以下属性：`engineerModeSigningStoreFile`、`engineerModeSigningStorePassword`、`engineerModeSigningKeyAlias`、`engineerModeSigningKeyPassword`。其他构建机也必须使用同一 keystore，不能另生成一把。
 
-## 启用与操作范围
-
-安装后在 LSPosed 中启用“工程模式菜单兼容”。入口位于“售后手动测试”；横向滑动顶部分类栏，Sensor Offset 在“设备调试”，校准状态、关键 Log、在线 Key 和安全芯片相关入口在“其他”。
-
-模块只恢复入口显示，不会自动执行校准、关键日志读写、在线写 Key 或安全芯片清除；工程模式自身的授权和设备条件仍保留。
+v1.1.0 起固定使用的签名证书 SHA-256 指纹是 `99:D4:B5:2B:86:E7:04:29:C3:EC:FA:CA:22:1B:75:43:2B:85:B9:7C:59:17:BC:A1:90:1E:CE:63:89:CE:37:03`。后续版本沿用对应私钥，否则已安装版本不能直接覆盖升级。
